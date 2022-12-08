@@ -6,8 +6,8 @@ curl
 
 ### Usage
 ```bash
-echo "mysite.com" > ~/sisites4test.txt
-echo "anothersite.com" > ~/sisites4test.txt
+echo "https://mysite.com" > ~/sites4test.txt
+echo "https://anothersite.com" > ~/sites4test.txt
 ./ssts
 ```
 ![example](example.png)

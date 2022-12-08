@@ -13,6 +13,9 @@ echo "anothersite.com" > ~/sisites4test.txt
 ![example](example.png)
 
 ### Reference
+
 Transfer time = Total - Starttransfer
+
 Page generation time = Pretransfer - Starttransfer
+
 etc...

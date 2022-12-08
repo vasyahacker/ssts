@@ -1,0 +1,66 @@
+#!/bin/sh
+list_file=~/sites4test.txt
+RED=$(printf "\033[31m")
+GREEN=$(printf "\033[32m")
+BGBLUE=$(printf "\033[44m\033[1m")
+NORMAL=$(printf "\033[0m")
+
+clear
+
+[ ! -e $list_file ] && {
+  printf "Creating default site list in %s" $list_file
+  printf "https://mail.ru\nhttps://google.com\nhttps://artlebedev.ru" > $list_file
+}
+
+domains=`cat $list_file`
+
+startwait()
+{
+  sp='/-\|'
+  printf "$1"
+  while :;do 
+      temp=${sp#?}
+      printf "[%c]" "$sp" 
+      sp=$temp${sp%"$temp"}
+      printf "\b\b\b"
+    sleep 0.05
+  done &
+  trap "kill $!" EXIT
+}
+endwait(){
+ kill $! 
+ wait $! 2>/dev/null 
+ trap " " EXIT 
+ printf "[ ${GREEN}Done${NORMAL} ]\n"
+}
+
+startwait "Processing... "
+  RESULT=$( printf "Domain|Answer|Size|DNS|Connect|Pretransfer|Starttransfer|Total\n"
+  for domain in $domains; do
+    curl -L "${domain}" -s -o /dev/null -w "%{url_effective}|%{http_code}|%{size_download}|%{time_namelookup}|%{time_connect}|%{time_pretransfer}|%{time_starttransfer}|%{time_total}\n"
+  done)
+endwait
+
+printf "$RESULT" | sort -t'|' -n -k8 | column -t -s'|' | {
+  while IFS= read -r LINE; do
+    answer=$(printf "$LINE" | tr -s " " | cut -d' ' -f2)
+    [ "$answer" = "Answer" ] && printf "${BGBLUE}$LINE   ${NORMAL}\n" && continue
+
+    [ $answer -eq 0 ] && {
+      printf "${RED}$LINE${NORMAL}\n"
+      continue
+    }
+
+    [ $answer -eq 200 ] && {
+      LINE=$(printf "$LINE\n" | sed -e "s/\ \(${answer}\)\ / ${GREEN}\1${NORMAL} /")
+      true
+    }
+    
+    total=$(printf "$LINE" | tr -s "\t" | tr -s " " | cut -d' ' -f8 | tr ',' '.')
+    [ "$(printf "$total >= 1\n" | bc -l)" = "1" ] && color="$RED" || color="$NORMAL"
+    printf "$LINE\n" | sed -e "s/\(${total}\)/${color}\1${NORMAL}/"
+  done
+}
+
+#wget -E -H -k -K -p
+#printf "\n${RESULT}\n" 
